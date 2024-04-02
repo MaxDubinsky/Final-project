@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,17 +17,20 @@ using System.Xml.Linq;
 using System.IO;
 using System.CodeDom;
 using System.Diagnostics.Contracts;
+using System.Net.NetworkInformation;
 
 namespace ConsoleApp9
 {
     class ContactManager
     {
         public XmlDocument numbers { get; set; }
-
+        public string path;
+        /*
         public ContactManager()
         {
             numbers = new XmlDocument();
         }
+        */
 
         public void LoadDoc(string path)
         {
@@ -39,6 +42,28 @@ namespace ConsoleApp9
             {
                 Console.WriteLine("This database doesn't exist.");
             }
+        }
+
+        public bool IsFileHasPath()
+        {
+            if (String.IsNullOrEmpty(this.path))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public void OpenFile()
+        {
+            if (IsFileHasPath())
+            {
+                File.Open(this.path, FileMode.Open);
+            } 
+            else
+            {
+                Console.WriteLine("Wrong path. Try again.");
+            }
+            
         }
 
         protected void LoadDataToDB(string name, string surname, string contactNumber)
@@ -85,6 +110,20 @@ namespace ConsoleApp9
             }
         }
 
+        public void CloseFile()
+        {
+            if (IsFileHasPath())
+            {
+                numbers.Save(path); 
+                numbers = null; 
+                GC.Collect(); 
+            }
+            else
+            {
+                Console.WriteLine("No file is currently opened.");
+            }
+        }
+
         public void DisplayNodes()
         {
             foreach (XmlNode node in numbers.DocumentElement.ChildNodes)
@@ -96,6 +135,30 @@ namespace ConsoleApp9
                 Console.WriteLine($"Full name: {name} {surname}, Contact Number: {contactNumber}");
             }
         }
+        /*
+        public ContactManager(string path) {
+            if (File.Exists(path))
+            {
+                this.path = path;
+                LoadDoc(path);
+            }
+            else
+            {
+                Console.WriteLine($"This file doesn't exist with path \"{path}\". Retry again.");
+            }
+        }
+        */
+        public ContactManager()
+        {
+            numbers = new XmlDocument();
+            LoadDoc("contactNumbers.xml");
+        }
+        /*
+        ~ContactManager()
+        {
+            Console.WriteLine("Contact Manager was deleted.");
+        }
+        */
     }
 
     class Program
@@ -103,16 +166,36 @@ namespace ConsoleApp9
         static void Main(string[] args)
         {
             ContactManager manager = new ContactManager();
-            manager.LoadDoc("contactNumbers.xml");
+            if (manager.IsFileHasPath())
+            {
+                manager.OpenFile();
 
-            // Example usage:
-            manager.AddContactNumber();
-            manager.DisplayNodes();
-            manager.DeleteContactNumber("John");
+                while (true)
+                {
+                    int choice = int.Parse(Console.ReadLine());
+                    switch (choice)
+                    {
+                        case 1:
+                            manager.AddContactNumber();
+                            continue;
+                        case 2:
+                            Console.Write("Enter name of contact: ");
+                            string name = Console.ReadLine();
+                            manager.DeleteContactNumber(name);
+                            continue;
+                        case 3:
+                            manager.DisplayNodes();
+                            continue;
+                        case 4:
+                            Console.Write("Enter your path: ");
+                            string path = Console.ReadLine();
+                            manager.LoadDoc(path);
+                            continue;
+                    }
+                }
+            }
 
-            // Save changes back to the XML file
-            manager.numbers.Save("contactNumbers.xml");
-
+            manager.CloseFile();
             Console.ReadKey();
         }
     }
