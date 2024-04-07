@@ -21,9 +21,17 @@ using System.Net.NetworkInformation;
 
 namespace ConsoleApp9
 {
+    class Number
+    {
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string contact_number { get; set; }
+        public Number(string name, string surname, string contact_number) { this.name = name; this.surname = surname; this.contact_number = contact_number; }
+    }
     class ContactManager
     {
         public XmlDocument numbers { get; set; }
+        public XmlElement contacts { get; set; }
         public string path;
         /*
         public ContactManager()
@@ -37,6 +45,7 @@ namespace ConsoleApp9
             if (File.Exists(path))
             {
                 numbers.Load(path);
+                this.path = path;
             }
             else
             {
@@ -68,7 +77,6 @@ namespace ConsoleApp9
 
         protected void LoadDataToDB(string name, string surname, string contactNumber)
         {
-            XmlElement contact = numbers.CreateElement("Contact");
             XmlElement nameElement = numbers.CreateElement("Name");
             XmlElement surnameElement = numbers.CreateElement("Surname");
             XmlElement contactNumberElement = numbers.CreateElement("Contact Number");
@@ -77,11 +85,9 @@ namespace ConsoleApp9
             surnameElement.InnerText = surname;
             contactNumberElement.InnerText = contactNumber;
 
-            contact.AppendChild(nameElement);
-            contact.AppendChild(surnameElement);
-            contact.AppendChild(contactNumberElement);
-
-            numbers.DocumentElement?.AppendChild(contact);
+            this.contacts.AppendChild(nameElement);
+            this.contacts.AppendChild(surnameElement);
+            this.contacts.AppendChild(contactNumberElement);            
         }
 
         public void AddContactNumber()
@@ -112,16 +118,9 @@ namespace ConsoleApp9
 
         public void CloseFile()
         {
-            if (IsFileHasPath())
-            {
-                numbers.Save(path); 
-                numbers = null; 
-                GC.Collect(); 
-            }
-            else
-            {
-                Console.WriteLine("No file is currently opened.");
-            }
+            numbers.Save(path); 
+            numbers = null; 
+            GC.Collect(); 
         }
 
         public void DisplayNodes()
@@ -148,24 +147,23 @@ namespace ConsoleApp9
             }
         }
         */
-        public ContactManager()
+        public ContactManager(string path)
         {
-            numbers = new XmlDocument();
-            LoadDoc("contactNumbers.xml");
+            this.numbers = new XmlDocument();
+
+            LoadDoc(path);
+
+            this.contacts = this.numbers.CreateElement("Contacts");
         }
-        /*
-        ~ContactManager()
-        {
-            Console.WriteLine("Contact Manager was deleted.");
-        }
-        */
     }
 
     class Program
     {
         static void Main(string[] args)
         {
-            ContactManager manager = new ContactManager();
+            ContactManager manager = new ContactManager("C:\\Users\\Maksim\\source\\repos\\ConsoleApp9\\ConsoleApp9\\contactNumbers.xml");
+            XmlElement people = manager.numbers.CreateElement("People");
+
             if (manager.IsFileHasPath())
             {
                 manager.OpenFile();
@@ -193,6 +191,11 @@ namespace ConsoleApp9
                             continue;
                     }
                 }
+                manager.CloseFile();
+            }
+            else
+            {
+                Console.WriteLine("This database isn't exist.");
             }
 
             manager.CloseFile();
